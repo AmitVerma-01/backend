@@ -211,8 +211,8 @@ const refreshAccessToken = asyncHandler(async(req,res)=>{
 
 const changeCurrentPassword = asyncHandler( async (req, res) => {
     const {oldPassword, newPassword} = req.body
-
-    const user = await User.findById(user._id)
+    
+    const user = await User.findById(req.user._id)
     const isPasswordCorrect = await user.isPasswordCorrect(oldPassword)
 
     if(!isPasswordCorrect){
@@ -306,7 +306,7 @@ const updateUserAvatar = asyncHandler(async(req, res)=>{
 const updateUserCoverImage = asyncHandler(async(req, res)=>{
     const coverImageLocalPath = req.file?.path
     if(!coverImageLocalPath){
-        throw new ApiError(400, "Avatar File is missing.")
+        throw new ApiError(400, "cover image File is missing.")
     }
 
     const userPrevDetails = req.user;
@@ -314,7 +314,7 @@ const updateUserCoverImage = asyncHandler(async(req, res)=>{
     const coverImage = await uploadOnCloudinary(coverImageLocalPath)
 
     if(!coverImage.url){
-        throw new ApiError(500, "Error while updating avatar.")
+        throw new ApiError(500, "Error while updating cover image.")
     }
 
     const user = await User.findByIdAndUpdate(
@@ -328,11 +328,13 @@ const updateUserCoverImage = asyncHandler(async(req, res)=>{
         }
     ).select("-password -refreshToken")
 
-    const isDeleted = await deleteImageFromCloudinary(userPrevDetails.avatar)
-
-
-    if(!isDeleted){
-        throw new ApiError(500, "Image updation failed(deletion failed from cloudinary)")
+    if(userPrevDetails.coverImage){
+        const isDeleted = await deleteImageFromCloudinary(userPrevDetails.coverImage)
+        
+        
+        if(!isDeleted){
+            throw new ApiError(500, "Cover image updation failed(deletion failed from cloudinary)")
+        }
     }
 
     return res
