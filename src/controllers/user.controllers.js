@@ -2,7 +2,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from '../utils/APIError.js'
 import { ApiResponse } from "../utils/ApiResponse.js";
 import {User} from '../models/user.model.js' 
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { deleteImageFromCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js";
 import jwt from "jsonwebtoken";
 const generateAccessAndRefreshToken = async (userId)=>{
     try {
@@ -209,4 +209,147 @@ const refreshAccessToken = asyncHandler(async(req,res)=>{
     }
 })
 
-export { registerUser , loginUser, logoutUser , refreshAccessToken}
+const changeCurrentPassword = asyncHandler( async (req, res) => {
+    const {oldPassword, newPassword} = req.body
+
+    const user = await User.findById(user._id)
+    const isPasswordCorrect = await user.isPasswordCorrect(oldPassword)
+
+    if(!isPasswordCorrect){
+        throw new ApiError(401, "Old Password is incorrect")
+    }
+
+    user.password = newPassword;
+    await user.save({validateBeforeSave : false})
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200,"","Password change successfully")
+        )
+})
+
+const getCurrentUser =  asyncHandler( async (req, res)=> {
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, req.user, "Current user fetched successfully.")
+    )
+})
+
+const updateUserDetailes = asyncHandler(async ( req , res)=>{
+
+    const {fullName} = req.body
+
+    if(!fullName){
+        throw new ApiError(401, "FullName is required")
+    }
+
+    const user = await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $set : {
+                fullName
+            }
+        },{
+            new : true
+        }
+    ).select("-password -refreshToken")
+
+    return res
+            .status(200)
+            .json(
+                new ApiResponse(200,user,"FullName Updated Successfully")
+            )
+})
+
+const updateUserAvatar = asyncHandler(async(req, res)=>{
+    const avatarLocalPath = req.file?.path
+    if(!avatarLocalPath){
+        throw new ApiError(400, "Avatar File is missing.")
+    }
+
+    const userPrevDetails = req?.user;
+
+    const avatar = await uploadOnCloudinary(avatarLocalPath)
+
+    if(!avatar.url){
+        throw new ApiError(500, "Error while updating avatar.")
+    }
+    
+    const user = await User.findByIdAndUpdate(
+        req?.user?._id,
+        {
+            $set : {
+                avatar : avatar.url
+            }
+        },{
+            new : true
+        }
+    ).select("-password -refreshToken")
+
+    const isDeleted = await deleteImageFromCloudinary(userPrevDetails.avatar)
+
+
+    if(!isDeleted){
+        throw new ApiError(500, "Image updation failed(deletion failed from cloudinary)")
+    }
+
+    return res
+            .status(200)
+            .json(
+                new ApiResponse(200, user, "Avatar Updated successfully.")
+            )
+
+})
+
+const updateUserCoverImage = asyncHandler(async(req, res)=>{
+    const coverImageLocalPath = req.file?.path
+    if(!coverImageLocalPath){
+        throw new ApiError(400, "Avatar File is missing.")
+    }
+
+    const userPrevDetails = req.user;
+
+    const coverImage = await uploadOnCloudinary(coverImageLocalPath)
+
+    if(!coverImage.url){
+        throw new ApiError(500, "Error while updating avatar.")
+    }
+
+    const user = await User.findByIdAndUpdate(
+        req?.user?._id,
+        {
+            $set : {
+                coverImage : coverImage.url
+            }
+        },{
+            new : true
+        }
+    ).select("-password -refreshToken")
+
+    const isDeleted = await deleteImageFromCloudinary(userPrevDetails.avatar)
+
+
+    if(!isDeleted){
+        throw new ApiError(500, "Image updation failed(deletion failed from cloudinary)")
+    }
+
+    return res
+            .status(200)
+            .json(
+                new ApiResponse(200, user, "coverImage Updated successfully")
+            )
+
+})
+
+export { registerUser,
+         loginUser,
+         logoutUser, 
+         refreshAccessToken, 
+         getCurrentUser, 
+         changeCurrentPassword,
+         updateUserDetailes,
+         updateUserAvatar,
+         updateUserCoverImage
+        }
