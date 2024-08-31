@@ -22,11 +22,11 @@ router.route("/register").post(
     router.route('/logout').post(verifyJWT, logoutUser)
 
     router.route('/refresh-token').post(refreshAccessToken);
-    
-    router.route('/get-current-user').get(verifyJWT,getCurrentUser)
+
+    router.route('/get-current-user').get(verifyJWT, getCurrentUser)
     router.route('/change-password').patch(verifyJWT, changeCurrentPassword)
     router.route('/update-details').patch(verifyJWT, updateUserDetailes)
-    router.route('/change-avatar').patch(verifyJWT,updateUserAvatar)
-    router.route('/change-cover-image').patch(verifyJWT,updateUserCoverImage)
+    router.route('/change-avatar').patch(verifyJWT, upload.single("avatar"), updateUserAvatar)
+    router.route('/change-cover-image').patch(verifyJWT, upload.single("coverImage"), updateUserCoverImage)
 
 export default router 
