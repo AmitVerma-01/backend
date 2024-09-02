@@ -4,7 +4,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import {User} from '../models/user.model.js' 
 import { deleteImageFromCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js";
 import jwt from "jsonwebtoken";
-import mongoose, { mongo } from "mongoose";
+import mongoose from "mongoose";
 const generateAccessAndRefreshToken = async (userId)=>{
     try {
         
@@ -151,8 +151,8 @@ const logoutUser = asyncHandler(async ( req, res) => {
     try {
         const userId = req.user._id
         const user  = await User.findByIdAndUpdate(userId,{
-            $set : {
-                refreshToken : null
+            $unset : {
+                refreshToken : 1
             }
         },{
             new : true
