@@ -1,5 +1,5 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { ApiError } from '../utils/APIError.js'
+import { ApiError } from '../utils/ApiError.js'
 import { ApiResponse } from "../utils/ApiResponse.js";
 import {User} from '../models/user.model.js' 
 import { deleteImageFromCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js";
@@ -38,7 +38,7 @@ const registerUser = asyncHandler( async (req, res) => {
 
     
     const { fullName, email, username, password } = req.body
-    console.log(req.body);
+
     
     if(
         [fullName,email,username,password].some(field => field?.trim()==="")
@@ -57,7 +57,7 @@ const registerUser = asyncHandler( async (req, res) => {
     const avatarLocalPath = req.files?.avatar[0]?.path
     let coverImageLocalPath;
     if(req.files?.coverImage){
-        coverImageLocalPath = req.files.coverImage[0].path
+        coverImageLocalPath = req.files?.coverImage?.[0].path
     }
 
     if(!avatarLocalPath){
@@ -102,7 +102,7 @@ const loginUser = asyncHandler( async (req, res) => {
     // send response
     
     const {email, username, password} = req.body
-    console.log(req.body);
+
     
     if(!(email || username)){
         throw new ApiError(400, "Username or Email is required")
@@ -117,7 +117,7 @@ const loginUser = asyncHandler( async (req, res) => {
     }
 
     const checkPassword = await user.isPasswordCorrect(password)
-    console.log(checkPassword);
+
     
 
     if(!checkPassword){
@@ -163,8 +163,6 @@ const logoutUser = asyncHandler(async ( req, res) => {
             secure : true
         }
 
-        console.log(user);
-        
         return res.status(200)
         .clearCookie("accessToken",options)
         .json(new ApiResponse(200, {}, "User logged Out"))
@@ -176,7 +174,7 @@ const logoutUser = asyncHandler(async ( req, res) => {
 
 const refreshAccessToken = asyncHandler(async(req,res)=>{
     try {
-        const incomingRefreshToken = req.cookie.refreshAccessToken || req.body.refreshToken
+        const incomingRefreshToken = req.cookie?.refreshToken || req.body.refreshToken
         if(!incomingRefreshToken){
             throw new ApiError(401, "Invalid Authorization")
         }
@@ -185,12 +183,12 @@ const refreshAccessToken = asyncHandler(async(req,res)=>{
             throw new ApiError(401, "Invalid Refresh Token")
         }
         const user = await User.findById(decodeToken?._id);
-    
+        
         if(!user){
             throw new ApiError(401, "Invalid Refresh Token")
         }
-    
-        if(incomingRefreshToken !== user.refreshAccessToken){
+        
+        if(incomingRefreshToken !== user.refreshToken){
             throw new ApiError(401, "Refresh token is expired or used")
         }
     

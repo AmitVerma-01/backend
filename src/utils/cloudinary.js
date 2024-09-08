@@ -1,4 +1,5 @@
 import { v2 as cloudinary} from 'cloudinary';
+import { log } from 'console';
 import fs from 'fs'
 
 cloudinary.config({ 
@@ -19,6 +20,7 @@ const uploadOnCloudinary = async (localFilePath)=>{
         
     } catch (error) {
         fs.unlinkSync(localFilePath)
+        console.error(error);
         return null
     }
 }
@@ -26,15 +28,37 @@ const uploadOnCloudinary = async (localFilePath)=>{
 const deleteImageFromCloudinary = async (imageUrl)=>{
     try {
         if(!imageUrl) return false; 
-        const publicId = imageUrl.slice(30).split(".")[0].slice(-20)
+        const publicId = getCloudinaryPublicId(imageUrl);
         const response = await cloudinary.uploader.destroy(publicId)
         
         return response.result == "ok" ?  true : false
 
     } catch (error) {
-        console.log("Failed image deletion from cloudinary " ,error?.message);
+        console.error("Failed image deletion from cloudinary " ,error?.message);
+        return false;
+    }
+}
+const deleteFileFromCloudinary = async (videoUrl,thumbnailUrl)=>{
+    try {
+        if(!(videoUrl && thumbnailUrl)) return false; 
+        const videoPublicId = getCloudinaryPublicId(videoUrl);
+        const thumbnailPublicId = getCloudinaryPublicId(thumbnailUrl);
+        log(videoPublicId, thumbnailPublicId)
+        const response = await cloudinary.uploader.destroy(videoPublicId , {resource_type : "video"})
+        await cloudinary.uploader.destroy(thumbnailPublicId , {resource_type : "image"})
+        console.log(response);
+        
+        return response.result == "ok" ?  true : false
+
+    } catch (error) {
+        console.error("Failed video deletion from cloudinary " ,error?.message);
         return false;
     }
 }
 
-export {uploadOnCloudinary , deleteImageFromCloudinary}
+const getCloudinaryPublicId = ( url ) => {
+    return url.slice(30).split(".")[0].slice(-20)
+}
+
+
+export {uploadOnCloudinary , deleteImageFromCloudinary, getCloudinaryPublicId, deleteFileFromCloudinary}
