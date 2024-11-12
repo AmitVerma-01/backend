@@ -14,6 +14,7 @@ app.use(express.static("public"))
 app.use(cookieParser())
 
 
+
 // Routes imports
 import userRouter from "./routes/user.routes.js"
 import healthcheckRouter from "./routes/healthcheck.route.js"
