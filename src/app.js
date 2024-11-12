@@ -26,7 +26,12 @@ import likeRouter from "./routes/like.route.js"
 import playlistRouter from "./routes/playlist.route.js"
 import dashboardRouter from "./routes/dashboard.route.js"
 
-
+app.get("/", (req, res) => {
+    res.status(200).json({
+        status : "success",
+        message : "Server is running"
+    })
+})
 app.use("/api/v1/healthcheck", healthcheckRouter)
 app.use('/api/v1/users',userRouter)
 app.use("/api/v1/tweets", tweetRouter)
